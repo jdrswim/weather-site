@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Red Wolf Farm Weather</title>
+  <meta name="description" content="A modern, elite North Carolina weather dashboard with a 90s Local-on-the-8s vibe." />
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet (map) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-sA+e2uQp8HsoPHeh78gfsce9zDMnYwHiiAaOg1Bqno0="
+    crossorigin="anonymous"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="header-top">
+      <div class="brand">
+        <div class="brand-line">
+          <span class="brand-badge" aria-hidden="true">NC</span>
+          <h1>Red Wolf Farm Weather</h1>
+        </div>
+        <p class="tagline">A modern dashboard with a 1990s “Local on the 8s” energy — in Wolfpack red.</p>
+      </div>
+
+      <div class="header-right">
+        <div class="clock" id="clock" aria-label="Current local time">--:--:--</div>
+        <div class="subclock" id="clockDate" aria-label="Current date">---</div>
+      </div>
+    </div>
+
+    <div class="local-on-8s" aria-hidden="true">
+      <div class="lo8s-track">
+        <span>LOCAL ON THE 8s</span>
+        <span>LOCAL ON THE 8s</span>
+        <span>LOCAL ON THE 8s</span>
+        <span>LOCAL ON THE 8s</span>
+        <span>LOCAL ON THE 8s</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Current conditions (PWS highlighted) -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Current Conditions</h2>
+        <div class="panel-actions">
+          <a class="link" href="https://www.wunderground.com/dashboard/pws/KNCRALEI761" target="_blank" rel="noopener">View PWS dashboard</a>
+        </div>
+      </div>
+
+      <div class="grid conditions-grid" aria-label="PWS current conditions">
+        <div class="tile hero">
+          <div class="tile-label">Temperature</div>
+          <div class="tile-value" id="pwsTemp">44.6<span class="unit">°F</span></div>
+          <div class="tile-sub">PWS: KNCRALEI761</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">Dewpoint</div>
+          <div class="tile-value" id="pwsDew">44.2<span class="unit">°F</span></div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">Humidity</div>
+          <div class="tile-value" id="pwsRh">99<span class="unit">%</span></div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">Wind</div>
+          <div class="tile-value" id="pwsWind">2.7<span class="unit">mph</span></div>
+          <div class="tile-sub" id="pwsWindDir">ESE</div>
+        </div>
+        <div class="tile">
+          <div class="tile-label">Pressure</div>
+          <div class="tile-value" id="pwsPres">30.10<span class="unit">in</span></div>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="note">
+          <strong>Note:</strong> PWS values are displayed as the primary highlight. (If you want these to auto-update live, we can wire in a Weather Underground API key.)
+        </div>
+
+        <div class="mini-panel" aria-label="Official observation (NWS)">
+          <div class="mini-head">
+            <div class="mini-title">Official Observation (NWS)</div>
+            <div class="mini-meta">Station: <span class="mono">KRDU</span></div>
+          </div>
+          <div class="mini-grid" id="nwsNow">
+            <div class="mini">
+              <div class="mini-k">Temp</div>
+              <div class="mini-v" data-field="temp">--</div>
+            </div>
+            <div class="mini">
+              <div class="mini-k">Weather</div>
+              <div class="mini-v" data-field="wx">--</div>
+            </div>
+            <div class="mini">
+              <div class="mini-k">Wind</div>
+              <div class="mini-v" data-field="wind">--</div>
+            </div>
+            <div class="mini">
+              <div class="mini-k">RH</div>
+              <div class="mini-v" data-field="rh">--</div>
+            </div>
+          </div>
+          <div class="mini-foot" id="nwsStamp">Updating…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Satellite imagery -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Live Satellite</h2>
+        <div class="panel-actions">
+          <button class="btn" id="refreshSat" type="button">Refresh</button>
+        </div>
+      </div>
+
+      <div class="sat-grid">
+        <figure class="sat">
+          <img
+            id="satVis"
+            src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/FD/GEOCOLOR/678x678.jpg"
+            alt="Visible geocolor satellite image (GOES-19)"
+            loading="lazy"
+          />
+          <figcaption>
+            <span class="cap-title">Visible</span>
+            <span class="cap-sub">GOES‑19 Geocolor</span>
+          </figcaption>
+        </figure>
+
+        <figure class="sat">
+          <img
+            id="satIr"
+            src="https://cdn.star.nesdis.noaa.gov/GOES19/ABI/FD/13/678x678.jpg"
+            alt="Infrared satellite image band 13 (GOES-19)"
+            loading="lazy"
+          />
+          <figcaption>
+            <span class="cap-title">Infrared</span>
+            <span class="cap-sub">GOES‑19 Band 13</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- NC temperature map -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>North Carolina Temperatures</h2>
+        <div class="panel-actions">
+          <span class="pill" id="stationCount">Stations: --</span>
+        </div>
+      </div>
+
+      <div class="ticker" aria-label="Temperature ticker">
+        <div class="ticker-label">Temps</div>
+        <div class="ticker-track">
+          <div class="ticker-text" id="tickerText">Loading stations…</div>
+        </div>
+      </div>
+
+      <div id="map" class="map" role="region" aria-label="North Carolina temperature map"></div>
+      <div class="map-foot">Tap a marker for station details • Data: National Weather Service (api.weather.gov)</div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="footer-title">Red Wolf Farm Weather</div>
+        <div class="footer-sub">Built as a clean, modern tribute to classic cable-weather graphics.</div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-meta">Imagery: NOAA GOES‑19</div>
+        <div class="footer-meta">Obs: National Weather Service</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Leaflet -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-oN7vPe3L9314Ky1+1w1z3topcS8DqwMhz77gKZLyowY="
+    crossorigin="anonymous"
+  ></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
